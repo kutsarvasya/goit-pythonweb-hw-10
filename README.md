@@ -1,83 +1,131 @@
 # Contacts API
 
-A simple REST API for managing contacts.  
-Built as a homework project using FastAPI and PostgreSQL.
+A REST API for managing contacts with authentication, email verification, rate limiting, and avatar upload.
+
+Built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Redis, Cloudinary, and Poetry.
 
 ---
 
 ## Features
 
-- create a contact
-- get list of contacts
-- get contact by id
-- update contact
-- delete contact
-- search by first name / last name / email
+- user registration and login
+- password hashing
+- JWT authentication
+- email verification
+- resend verification email
+- get current user profile
+- upload user avatar with Cloudinary
+- rate limiting for `/api/users/me`
+- CORS support
+- create, read, update, delete contacts
+- search contacts by first name, last name, or email
 - get contacts with birthdays in the next 7 days
+- users can access only their own contacts
 
 ---
 
 ## Tech Stack
 
+- Python
 - FastAPI
 - SQLAlchemy async
 - PostgreSQL
 - Alembic
 - Pydantic
+- JWT
+- Redis
+- SlowAPI
+- FastAPI-Mail
+- Cloudinary
 - Poetry
 
 ---
 
-## How to run
+## Installation
 
-## 1. Clone the project
+Clone the repository:
 
 ```bash
 git clone <repo-url>
 cd <project-folder>
 ```
 
-## 2. Install dependencies
+Install dependencies:
 
 ```bash
 poetry install
 ```
 
-## 3. Create .env
+---
 
-Create a `.env` file in the project root:
+## Environment Variables
+
+Create a `.env` file in the project root.
 
 ```env
-DB_URL=postgresql+asyncpg://postgres:567234@localhost:5432/todo_app
+DB_URL=postgresql+asyncpg://postgres:567234@localhost:5432/contacts_app
+
+JWT_SECRET=your_secret_key
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_SECONDS=3600
+
+MAIL_USERNAME=your_email@meta.ua
+MAIL_PASSWORD=your_mail_password
+MAIL_FROM=your_email@meta.ua
+MAIL_PORT=465
+MAIL_SERVER=smtp.meta.ua
+MAIL_FROM_NAME=Contacts API
+MAIL_STARTTLS=False
+MAIL_SSL_TLS=True
+USE_CREDENTIALS=True
+VALIDATE_CERTS=False
+
+CLD_NAME=your_cloudinary_name
+CLD_API_KEY=your_cloudinary_api_key
+CLD_API_SECRET=your_cloudinary_api_secret
 ```
 
-## 4. Run PostgreSQL with Docker
+---
+
+## PostgreSQL
+
+Run PostgreSQL container:
 
 ```bash
 docker run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=567234 -d postgres
 ```
 
-If container already exists:
+If the container already exists:
 
 ```bash
 docker start postgres
 ```
 
-## 5. Run migrations
+---
+
+## Database Migration
+
+Run migrations:
 
 ```bash
 poetry run alembic upgrade head
 ```
 
-## 6. Start the server
+---
+
+## Run the Application
 
 ```bash
 poetry run uvicorn main:app --reload
 ```
 
----
+Application URL:
 
-## API Docs
+```text
+http://127.0.0.1:8000
+```
+
+Swagger documentation:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -85,19 +133,33 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Endpoints
+## API Endpoints
 
-- `GET /api/contacts/` - get all contacts
-- `GET /api/contacts/{id}` - get one contact
+### Auth
+
+- `POST /api/auth/register` - register new user
+- `POST /api/auth/login` - login and get access token
+- `GET /api/auth/confirmed_email/{token}` - confirm email
+- `POST /api/auth/request_email` - resend confirmation email
+
+### Users
+
+- `GET /api/users/me` - get current user
+- `PATCH /api/users/avatar` - update user avatar
+
+### Contacts
+
+- `GET /api/contacts/` - get all user contacts
+- `GET /api/contacts/{contact_id}` - get contact by ID
 - `POST /api/contacts/` - create contact
-- `PUT /api/contacts/{id}` - update contact
-- `DELETE /api/contacts/{id}` - delete contact
-- `GET /api/contacts/search/?query=` - search contacts
+- `PUT /api/contacts/{contact_id}` - update contact
+- `DELETE /api/contacts/{contact_id}` - delete contact
+- `GET /api/contacts/search/?query=value` - search contacts
 - `GET /api/contacts/birthdays/` - upcoming birthdays
 
 ---
 
-## Example request
+## Example Contact Request
 
 ```json
 {
@@ -112,25 +174,59 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Project structure
+## Authentication
+
+Protected routes require a Bearer token.
+
+Example header:
+
+```text
+Authorization: Bearer your_access_token
+```
+
+Login endpoint uses form data:
+
+```text
+username=your_username
+password=your_password
+```
+
+---
+
+## Project Structure
 
 ```text
 src/
   api/
-  repository/
-  database/
+    auth.py
+    contacts.py
+    users.py
   conf/
+    config.py
+  database/
+    db.py
+    models.py
+  repository/
+    contacts.py
+    users.py
+  services/
+    auth.py
+    email.py
+    limiter.py
+    upload_file.py
+    templates/
+      verify_email.html
   schemas.py
 main.py
+migrations/
 ```
 
 ---
 
 ## Notes
 
-- database URL is stored in `.env`
-- `.env` is added to `.gitignore`
-- async database access is used
-
----
-
+- all sensitive data is stored in `.env`
+- `.env` should not be committed to GitHub
+- use `.env.example` for example configuration
+- passwords are stored only as hashes
+- users can access only their own contacts
