@@ -2,7 +2,7 @@
 
 A REST API for managing contacts with authentication, email verification, rate limiting, and avatar upload.
 
-Built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Redis, Cloudinary, and Poetry.
+Built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Redis, Cloudinary, Docker, and Poetry.
 
 ---
 
@@ -37,6 +37,8 @@ Built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Redis, Cloudinary, and
 - SlowAPI
 - FastAPI-Mail
 - Cloudinary
+- Docker
+- Docker Compose
 - Poetry
 
 ---
@@ -50,12 +52,6 @@ git clone <repo-url>
 cd <project-folder>
 ```
 
-Install dependencies:
-
-```bash
-poetry install
-```
-
 ---
 
 ## Environment Variables
@@ -63,7 +59,7 @@ poetry install
 Create a `.env` file in the project root.
 
 ```env
-DB_URL=postgresql+asyncpg://postgres:567234@localhost:5432/contacts_app
+DB_URL=postgresql+asyncpg://postgres:567234@db:5432/contacts_app
 
 JWT_SECRET=your_secret_key
 JWT_ALGORITHM=HS256
@@ -83,41 +79,35 @@ VALIDATE_CERTS=False
 CLD_NAME=your_cloudinary_name
 CLD_API_KEY=your_cloudinary_api_key
 CLD_API_SECRET=your_cloudinary_api_secret
+
+REDIS_URL=redis://redis:6379
 ```
 
 ---
 
-## PostgreSQL
+## Run with Docker Compose
 
-Run PostgreSQL container:
+Build and start all services:
 
 ```bash
-docker run --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=567234 -d postgres
+docker compose up --build
 ```
 
-If the container already exists:
+Run containers in background:
 
 ```bash
-docker start postgres
+docker compose up -d
 ```
 
----
-
-## Database Migration
-
-Run migrations:
+Stop containers:
 
 ```bash
-poetry run alembic upgrade head
+docker compose down
 ```
 
 ---
 
-## Run the Application
-
-```bash
-poetry run uvicorn main:app --reload
-```
+## Application
 
 Application URL:
 
@@ -217,8 +207,14 @@ src/
     templates/
       verify_email.html
   schemas.py
+
 main.py
+
 migrations/
+
+Dockerfile
+docker-compose.yml
+.dockerignore
 ```
 
 ---
@@ -230,3 +226,4 @@ migrations/
 - use `.env.example` for example configuration
 - passwords are stored only as hashes
 - users can access only their own contacts
+- Redis is used for rate limiting
